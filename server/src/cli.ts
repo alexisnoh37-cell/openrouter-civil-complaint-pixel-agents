@@ -22,7 +22,7 @@ import {
 } from './assetLoader.js';
 import type { AssetCache } from './clientMessageHandler.js';
 import { FileStateAdapter } from './fileStateAdapter.js';
-import { claudeProvider, copyHookScript } from './providers/index.js';
+import { openrouterProvider } from './providers/index.js';
 import { PixelAgentsServer } from './server.js';
 
 // ── Argument parsing ──────────────────────────────────────────
@@ -90,30 +90,12 @@ async function main(): Promise<void> {
 
   try {
     // Create runtime first (before server.start, so we can pass it in)
-    const runtime = new AgentRuntime(store, claudeProvider);
+    const runtime = new AgentRuntime(store, openrouterProvider);
 
     // Wire hook events: HTTP POST -> runtime -> hookEventHandler -> agents
     server.onHookEvent((providerId, event) => {
       runtime.handleHookEvent(providerId, event);
     });
-
-    // onSetHooksEnabled side effect: install/uninstall hooks when user toggles in UI.
-    // Captures config from the outer scope after server.start().
-    let currentConfig: { port: number; token: string } | null = null;
-    const onSetHooksEnabled = async (enabled: boolean): Promise<void> => {
-      if (!currentConfig) return;
-      if (enabled) {
-        await claudeProvider.installHooks(
-          `http://127.0.0.1:${currentConfig.port}`,
-          currentConfig.token,
-        );
-        copyHookScript(distRoot);
-        console.log('[Pixel Agents] Hooks installed (user toggle)');
-      } else {
-        await claudeProvider.uninstallHooks();
-        console.log('[Pixel Agents] Hooks uninstalled (user toggle)');
-      }
-    };
 
     const config = await server.start({
       store,
@@ -123,35 +105,12 @@ async function main(): Promise<void> {
       port: args.port,
       staticDir,
       assetCache,
-      onSetHooksEnabled,
+      onSetHooksEnabled: () => undefined,
     });
-    currentConfig = { port: config.port, token: config.token };
+    runtime.hooksEnabled.current = false;
+    runtime.watchAllSessions.current = false;
 
-    // Sync runtime refs with persisted settings BEFORE first scan tick
-    runtime.hooksEnabled.current = adapter.getSetting('pixel-agents.hooksEnabled', true);
-    runtime.watchAllSessions.current = adapter.getSetting('pixel-agents.watchAllSessions', false);
-
-    // Install hooks on startup if the persisted setting says so
-    if (runtime.hooksEnabled.current) {
-      try {
-        await claudeProvider.installHooks(`http://127.0.0.1:${config.port}`, config.token);
-        copyHookScript(distRoot);
-        console.log('[Pixel Agents] Hooks installed');
-      } catch (err) {
-        console.error('[Pixel Agents] Failed to install hooks:', err);
-      }
-    }
-
-    // Start scanning for external sessions (Claude running in user's terminal)
-    const cwd = process.cwd();
-    const dirs = claudeProvider.getSessionDirs?.(cwd);
-    if (dirs && dirs[0]) {
-      const projectDir = dirs[0];
-      console.log(`[Pixel Agents] Scanning project dir: ${projectDir}`);
-      runtime.startProjectScan(projectDir);
-      runtime.startExternalScanning(projectDir);
-      runtime.startStaleCheck();
-    }
+    console.log('[Pixel Agents] Provider: OpenRouter civil-complaint SSE');
 
     console.log(`\n  Pixel Agents server running at http://${args.host}:${config.port}\n`);
 

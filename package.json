@@ -1,7 +1,7 @@
 {
   "name": "pixel-agents",
   "displayName": "Pixel Agents",
-  "description": "Pixel art office where your Claude Code agents come to life as animated characters",
+  "description": "Pixel art office for an OpenRouter-powered civil complaint workflow",
   "version": "1.3.0",
   "publisher": "pablodelucca",
   "repository": {

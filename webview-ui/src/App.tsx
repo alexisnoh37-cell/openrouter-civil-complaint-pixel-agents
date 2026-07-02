@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toMajorMinor } from './changelogData.js';
 import { BottomToolbar } from './components/BottomToolbar.js';
 import { ChangelogModal } from './components/ChangelogModal.js';
+import { CivilComplaintPanel } from './components/CivilComplaintPanel.js';
 import { DebugView } from './components/DebugView.js';
 import { EditActionBar } from './components/EditActionBar.js';
 import { MigrationNotice } from './components/MigrationNotice.js';
@@ -196,6 +197,8 @@ function App() {
         onZoomChange={editor.handleZoomChange}
         panRef={editor.panRef}
       />
+
+      {isBrowserRuntime && <CivilComplaintPanel />}
 
       {!isDebugMode ? (
         <>

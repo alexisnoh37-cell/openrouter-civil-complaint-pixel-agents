@@ -30,6 +30,15 @@ allure-report/
 # Environment files
 .env*
 !.env.example
+**/.venv/
+**/__pycache__/
+*.py[cod]
+.openrouter-office.pids.json
+
+# Local complaint data may contain personal information
+civil-backend/data/*.xlsx
+civil-backend/data/*.xls
+civil-backend/data/*.csv
 
 # Project-specific
 .claude

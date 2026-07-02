@@ -555,9 +555,16 @@ export function useExtensionMessages(
         os.setAgentTokens(id, msg.inputTokens as number, msg.outputTokens as number);
       }
     };
+    const customHandler = (event: Event) => {
+      handler((event as CustomEvent<Record<string, unknown>>).detail);
+    };
+    window.addEventListener('pixel-agent-message', customHandler);
     const unsubscribe = transport.onMessage(handler);
     transport.send({ type: 'webviewReady' });
-    return unsubscribe;
+    return () => {
+      window.removeEventListener('pixel-agent-message', customHandler);
+      unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getOfficeState]);
 
